@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -25,19 +26,16 @@ func main() {
 	outputFileName := strings.Split(outputFilePath, "/")[1]
 	outputFileName = strings.Split(outputFileName, ".")[0]
 
-	// Read input file
 	records, err := readFile(inputFilePath)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fileWithoutHeader := records[1:]
+
 	persons := MountPersons(fileWithoutHeader)
 	orderedByName := OrderByName(persons)
 	orderedByAge := OrderByAge(persons)
-
-	fmt.Println(orderedByName)
-	fmt.Println(orderedByAge)
 
 	err = WriteFile("./"+outputFileName+"_ordenado_por_nome.csv", orderedByName)
 	if err != nil {
@@ -90,25 +88,23 @@ func MountPersons(records [][]string) []Person {
 }
 
 func OrderByName(persons []Person) []Person {
-	for i := 0; i < len(persons); i++ {
-		for j := i + 1; j < len(persons); j++ {
-			if persons[i].Name > persons[j].Name {
-				persons[i], persons[j] = persons[j], persons[i]
-			}
-		}
-	}
-	return persons
+	orderedPersonsByName := make([]Person, len(persons))
+	copy(orderedPersonsByName, persons)
+	sort.Slice(orderedPersonsByName, func(i, j int) bool {
+		upperNameI := strings.ToUpper(orderedPersonsByName[i].Name)
+		upperNameJ := strings.ToUpper(orderedPersonsByName[j].Name)
+		return upperNameI < upperNameJ
+	})
+	return orderedPersonsByName
 }
 
 func OrderByAge(persons []Person) []Person {
-	for i := 0; i < len(persons); i++ {
-		for j := i + 1; j < len(persons); j++ {
-			if persons[i].Age > persons[j].Age {
-				persons[i], persons[j] = persons[j], persons[i]
-			}
-		}
-	}
-	return persons
+	orderedPersonsByAge := make([]Person, len(persons))
+	copy(orderedPersonsByAge, persons)
+	sort.Slice(orderedPersonsByAge, func(i, j int) bool {
+		return orderedPersonsByAge[i].Age < orderedPersonsByAge[j].Age
+	})
+	return orderedPersonsByAge
 }
 
 func WriteFile(outputFilePath string, records []Person) error {
